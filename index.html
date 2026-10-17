@@ -1,0 +1,650 @@
+<title>Naman Jhawar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout concept: a signal-vs-noise instrument panel. The hero carries a live tuner that turns static into a clean trace; the rest of the page alternates ink and paper bands and lists work like readouts. */
+:root{
+  --bg:#0a0e1c; --bg-2:#0f1530; --surface:#131a37; --surface-2:#19224a;
+  --line:rgba(150,168,230,.18); --ink:#eef2ff; --muted:#9aa6cc;
+  --signal:#ffc857; --signal-ink:#1c1500; --noise:#6a77a6; --glow:rgba(255,200,87,.16);
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Instrument Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f1f3f9; --bg-2:#e7ebf6; --surface:#ffffff; --surface-2:#f6f7fc;
+    --line:rgba(16,24,64,.15); --ink:#0b1020; --muted:#48537a;
+    --signal:#a85a00; --signal-ink:#ffffff; --noise:#8792b8; --glow:rgba(168,90,0,.12);
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f1f3f9; --bg-2:#e7ebf6; --surface:#ffffff; --surface-2:#f6f7fc;
+  --line:rgba(16,24,64,.15); --ink:#0b1020; --muted:#48537a;
+  --signal:#a85a00; --signal-ink:#ffffff; --noise:#8792b8; --glow:rgba(168,90,0,.12);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e1c; --bg-2:#0f1530; --surface:#131a37; --surface-2:#19224a;
+  --line:rgba(150,168,230,.18); --ink:#eef2ff; --muted:#9aa6cc;
+  --signal:#ffc857; --signal-ink:#1c1500; --noise:#6a77a6; --glow:rgba(255,200,87,.16);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--ink);
+  font:400 1.0625rem/1.65 var(--body);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+a{color:inherit}
+h1,h2,h3,p,ul,ol,figure{margin:0}
+ul,ol{padding:0;list-style:none}
+:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.wrap{
+  max-width:1180px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.band{padding-block:clamp(4rem,9vw,7.5rem)}
+.band--alt{background:var(--bg-2)}
+section[id]{scroll-margin-top:calc(72px + env(safe-area-inset-top,0px))}
+
+.eyebrow{font:500 .78rem/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--signal)}
+.display{font-family:var(--display);font-weight:700;font-stretch:88%;letter-spacing:-.03em;line-height:1;text-wrap:balance}
+h2.display{font-size:clamp(2rem,4.8vw,3.5rem);margin-top:.9rem}
+.lede{font-size:clamp(1.05rem,1.6vw,1.25rem);color:var(--muted);max-width:56ch}
+.muted{color:var(--muted)}
+
+/* progress (progressive enhancement) */
+.progress{display:none}
+@supports (animation-timeline: scroll()){
+  .progress{display:block;position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;height:3px;z-index:40;background:var(--signal);transform-origin:0 50%;transform:scaleX(0);animation:grow linear both;animation-timeline:scroll(root)}
+  @keyframes grow{to{transform:scaleX(1)}}
+}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+@supports (background:color-mix(in srgb,red,blue)){
+  .top{background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:.8rem}
+.brand{display:flex;align-items:baseline;gap:.8rem;text-decoration:none;min-width:0}
+.brand b{font:700 1.1rem/1 var(--display);letter-spacing:-.01em;white-space:nowrap}
+.brand span{font:400 .72rem/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.nav{display:flex;align-items:center;gap:1.4rem}
+.nav a{font:500 .74rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--muted);transition:color .25s}
+.nav a:hover{color:var(--ink)}
+.tbtn{appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink);width:2.2rem;height:2.2rem;border-radius:50%;display:grid;place-items:center;cursor:pointer;transition:border-color .25s,transform .25s var(--ease)}
+.tbtn:hover{border-color:var(--signal);transform:rotate(18deg)}
+.tbtn svg{width:1rem;height:1rem}
+@media (max-width:820px){.nav .hide-sm{display:none}.brand span{display:none}}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:.7rem;padding:.9rem 1.35rem;border-radius:999px;font:600 .95rem/1 var(--body);text-decoration:none;border:1px solid var(--line);color:var(--ink);background:transparent;cursor:pointer;transition:transform .35s var(--ease),border-color .25s,background .25s}
+.btn:hover{transform:translateY(-3px);border-color:var(--ink)}
+.btn--primary{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+.btn--primary:hover{border-color:var(--signal);filter:brightness(1.06)}
+.btn i{font-style:normal;display:inline-block;transition:transform .35s var(--ease)}
+.btn:hover i{transform:translateX(4px)}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding-top:clamp(3rem,7vw,6rem);padding-bottom:clamp(3rem,6vw,5rem)}
+.hero::before{content:"";position:absolute;inset:-20% -10% auto auto;width:70%;height:90%;background:radial-gradient(closest-side,var(--glow),transparent);pointer-events:none}
+.hero .wrap{position:relative}
+.hero h1{font-size:clamp(2.7rem,8.2vw,6.6rem);margin-top:1.2rem;max-width:15ch}
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.12em;margin-bottom:-.12em}
+.w>span{display:inline-block;animation:rise .95s var(--ease) backwards;animation-delay:calc(var(--i)*70ms + 120ms)}
+.w.sig{color:var(--signal)}
+@keyframes rise{from{transform:translateY(108%)}to{transform:none}}
+.hero__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(2rem,5vw,4.5rem);align-items:end;margin-top:clamp(2rem,4vw,3.2rem)}
+.hero__cta{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.8rem}
+.hero__now{margin-top:2rem;font:400 .8rem/1.6 var(--mono);color:var(--muted);letter-spacing:.04em}
+.hero__now b{color:var(--ink);font-weight:500}
+@media (max-width:900px){.hero__grid{grid-template-columns:minmax(0,1fr)}}
+
+.tuner{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:1rem 1.1rem 1.1rem;min-width:0}
+.tuner__head{display:flex;justify-content:space-between;gap:1rem;font:500 .7rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-bottom:.8rem}
+.tuner__head b{color:var(--signal);font-weight:500}
+#scope{display:block;width:100%;height:180px;border-radius:4px;background:var(--bg)}
+.tuner input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;margin:.9rem 0 0;cursor:pointer}
+.tuner input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--noise),var(--signal))}
+.tuner input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--noise),var(--signal))}
+.tuner input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-10px;border-radius:50%;background:var(--signal);border:4px solid var(--bg);box-shadow:0 0 0 1px var(--signal)}
+.tuner input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--signal);border:4px solid var(--bg);box-shadow:0 0 0 1px var(--signal)}
+.tuner figcaption{font-size:.88rem;color:var(--muted);margin-top:.7rem}
+
+/* marquee */
+.marquee{border-block:1px solid var(--line);background:var(--bg-2);overflow:hidden;padding-block:1rem;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.track{display:flex;width:max-content;animation:scroll 48s linear infinite}
+.marquee:hover .track{animation-play-state:paused}
+.track span{font:500 .8rem/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding-right:2.4rem;white-space:nowrap}
+.track span::after{content:"/";color:var(--signal);margin-left:2.4rem}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* about */
+.about{display:grid;grid-template-columns:minmax(0,.34fr) minmax(0,.66fr);gap:clamp(2rem,6vw,5rem)}
+.about h2{margin-top:0;font-size:clamp(1.8rem,3.6vw,2.7rem);font-weight:600}
+.about p+p{margin-top:1.1rem}
+.about .lede{max-width:62ch;margin-top:1.4rem}
+.id-card{display:grid;gap:.35rem;font:400 .85rem/1.6 var(--mono);color:var(--muted)}
+.id-card b{font-weight:500;color:var(--ink);font-size:.95rem}
+@media (max-width:820px){.about{grid-template-columns:minmax(0,1fr)}}
+
+/* experience center */
+.head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:clamp(1.5rem,4vw,4rem);align-items:end}
+.head p{color:var(--muted)}
+.head p+p{margin-top:.9rem}
+@media (max-width:820px){.head{grid-template-columns:minmax(0,1fr)}}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2.2rem}
+.chip{appearance:none;border:1px solid var(--line);background:transparent;color:var(--muted);font:500 .74rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:.65rem .9rem;border-radius:999px;cursor:pointer;transition:color .2s,border-color .2s,background .2s}
+.chip:hover{color:var(--ink);border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--signal);border-color:var(--signal);color:var(--signal-ink)}
+.status{font:400 .78rem/1 var(--mono);color:var(--muted);margin-top:1rem;min-height:1em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-top:1.2rem}
+.card{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1.5rem;min-width:0;transition:border-color .3s,transform .5s var(--ease)}
+.card::before{content:"";position:absolute;inset:0;background:radial-gradient(260px circle at var(--mx,50%) var(--my,0%),var(--glow),transparent 70%);opacity:0;transition:opacity .3s;pointer-events:none}
+.card:hover{border-color:var(--signal);transform:translateY(-6px)}
+.card:hover::before{opacity:1}
+.tag{font:500 .7rem/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--signal)}
+.card h3{font:650 1.3rem/1.15 var(--display);letter-spacing:-.01em;margin-top:.8rem}
+.card p{color:var(--muted);font-size:.97rem;line-height:1.6;margin-top:.7rem}
+
+/* readout lists */
+.rows{border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:minmax(0,.32fr) minmax(0,.68fr);gap:1rem 2rem;padding-block:clamp(1.4rem,2.6vw,2rem);border-bottom:1px solid var(--line);transition:background .3s}
+.row:hover{background:linear-gradient(90deg,var(--glow),transparent 70%)}
+.row h3{font:650 clamp(1.3rem,2.4vw,1.9rem)/1.15 var(--display);letter-spacing:-.015em}
+.row p{color:var(--muted);margin-top:.6rem;max-width:64ch}
+.row .when{font:500 .85rem/1.5 var(--mono);color:var(--signal)}
+.row .idx{font:700 clamp(2.4rem,5vw,4rem)/1 var(--display);color:transparent;-webkit-text-stroke:1.5px var(--signal);letter-spacing:-.02em}
+@media (max-width:720px){.row{grid-template-columns:minmax(0,1fr)}}
+.models .row{grid-template-columns:minmax(0,.28fr) minmax(0,.72fr)}
+@media (max-width:720px){.models .row{grid-template-columns:minmax(0,1fr)}}
+.subhead{font:600 1.1rem/1.2 var(--display);margin:3.2rem 0 1rem}
+
+/* impact */
+.impact{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:2.4rem 2rem;margin-top:3rem}
+.impact b{display:block;font:700 clamp(3.4rem,8vw,6rem)/.95 var(--display);font-stretch:85%;letter-spacing:-.04em;color:var(--signal);font-variant-numeric:tabular-nums}
+.impact p{color:var(--muted);margin-top:.9rem;font-size:.98rem;max-width:30ch;padding-top:.9rem;border-top:1px solid var(--line)}
+
+/* work steps */
+.steps{margin-top:3rem}
+.steps .row{grid-template-columns:minmax(0,.18fr) minmax(0,.82fr)}
+@media (max-width:720px){.steps .row{grid-template-columns:minmax(0,1fr)}}
+
+/* timeline */
+.timeline{margin-top:3rem;position:relative}
+.timeline .row{grid-template-columns:minmax(0,.26fr) minmax(0,.74fr);padding-block:1.4rem}
+.timeline .row p{margin-top:.2rem;color:var(--ink)}
+.timeline .row p span{color:var(--muted)}
+@media (max-width:720px){.timeline .row{grid-template-columns:minmax(0,1fr)}}
+
+/* recognition */
+.two{display:grid;grid-template-columns:minmax(0,.58fr) minmax(0,.42fr);gap:clamp(2rem,6vw,5rem)}
+@media (max-width:820px){.two{grid-template-columns:minmax(0,1fr)}}
+.list{margin-top:1.6rem;border-top:1px solid var(--line)}
+.list li{padding-block:1rem;border-bottom:1px solid var(--line);color:var(--muted);font-size:.98rem}
+.list li b{color:var(--ink);font-weight:600;display:block;font-family:var(--display);font-size:1.08rem;margin-bottom:.15rem}
+
+/* contact */
+.contact h2{font-size:clamp(2.4rem,7vw,5.4rem);max-width:14ch}
+.contact .lede{margin-top:1.4rem}
+.mail{display:flex;flex-wrap:wrap;align-items:center;gap:.8rem 1rem;margin-top:2.2rem}
+#email{font:500 clamp(1rem,2.4vw,1.4rem)/1.2 var(--mono);color:var(--ink);word-break:break-all;border-bottom:2px solid var(--signal);padding-bottom:.2rem}
+.copystate{font:400 .8rem/1 var(--mono);color:var(--muted);min-height:1em;margin-top:.8rem}
+.contact .hero__cta{margin-top:1.6rem}
+footer{border-top:1px solid var(--line);padding-block:1.6rem 2rem;font:400 .78rem/1.6 var(--mono);color:var(--muted)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem 1.5rem}
+
+/* reveal: offset only, never hidden */
+.js .rv{transform:translateY(28px);transition:transform .9s var(--ease);transition-delay:var(--d,0ms)}
+.js .rv.in{transform:none}
+
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .rv{transform:none}
+  .track{width:auto;flex-wrap:wrap}
+}
+</style>
+
+<div class="progress" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top"><b>Naman Jhawar</b><span>AI Transformation Leader</span></a>
+    <nav class="nav" aria-label="Sections">
+      <a class="hide-sm" href="#center">Experience Center</a>
+      <a class="hide-sm" href="#models">Models</a>
+      <a class="hide-sm" href="#impact">Impact</a>
+      <a class="hide-sm" href="#career">Career</a>
+      <a href="#contact">Contact</a>
+      <button class="tbtn" id="themeBtn" type="button" aria-label="Switch colour theme" title="Switch colour theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero" aria-labelledby="h1">
+  <div class="wrap">
+    <p class="eyebrow">Naman Jhawar · AI Transformation Leader</p>
+    <h1 class="display" id="h1"><span class="w"><span style="--i:0">I</span></span> <span class="w"><span style="--i:1">turn</span></span> <span class="w"><span style="--i:2">AI</span></span> <span class="w"><span style="--i:3">from</span></span> <span class="w sig"><span style="--i:4">pilot</span></span> <span class="w sig"><span style="--i:5">to</span></span> <span class="w sig"><span style="--i:6">enterprise</span></span> <span class="w sig"><span style="--i:7">scale.</span></span></h1>
+
+    <div class="hero__grid">
+      <div>
+        <p class="lede">8+ years leading Generative AI and digital products from first prototype to live deployment in regulated industries, aligning engineering, data science and senior leadership around measurable business ROI.</p>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="#center">See the work <i aria-hidden="true">→</i></a>
+          <a class="btn" href="#contact">Get in touch</a>
+        </div>
+        <p class="hero__now">Now: <b>Senior Manager, IT Strategy, Digital &amp; AI</b><br>Star Union Dai-ichi Life Insurance</p>
+      </div>
+
+      <figure class="tuner" aria-label="Noise to signal tuner">
+        <div class="tuner__head"><span>Data chaos</span><b id="readout">Signal 100%</b><span>Decision</span></div>
+        <canvas id="scope" aria-hidden="true"></canvas>
+        <label for="tune"><span class="sr">Tune noise into signal</span></label>
+        <input id="tune" type="range" min="0" max="100" value="100" step="1">
+        <figcaption>Drag the dial. The job is turning noisy data into a signal people can act on.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<div class="marquee" aria-hidden="true">
+  <div class="track">
+    <span>Generative AI</span><span>Agentic journeys</span><span>RAG architectures</span><span>LangGraph</span><span>Microsoft AutoGen</span><span>Large vision models</span><span>Multimodal AI</span><span>Azure cloud transformation</span><span>AI product strategy</span><span>ROI forecasting</span>
+    <span>Generative AI</span><span>Agentic journeys</span><span>RAG architectures</span><span>LangGraph</span><span>Microsoft AutoGen</span><span>Large vision models</span><span>Multimodal AI</span><span>Azure cloud transformation</span><span>AI product strategy</span><span>ROI forecasting</span>
+  </div>
+</div>
+
+<section class="band" aria-labelledby="about-h">
+  <div class="wrap about">
+    <div class="id-card rv">
+      <b>Naman Jhawar</b>
+      <span>Senior Manager, IT Strategy, Digital &amp; AI</span>
+      <span>Star Union Dai-ichi Life Insurance</span>
+      <span>MBA, Business Analytics · SBM NMIMS Mumbai</span>
+    </div>
+    <div class="rv" style="--d:80ms">
+      <h2 class="display" id="about-h">Strategy that survives contact with production.</h2>
+      <p class="lede">I am a strategic AI product manager who owns the full lifecycle of Generative AI and digital products: defining high-impact roadmaps, leading cross-functional engineering and data science teams, and bridging complex LLM architectures and business ROI.</p>
+      <p class="lede">The goal is always the same: solutions that are scalable, ethical and genuinely used.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band band--alt" id="center" aria-labelledby="center-h">
+  <div class="wrap">
+    <div class="head">
+      <div class="rv">
+        <p class="eyebrow">Star Union Dai-ichi Life Insurance</p>
+        <h2 class="display" id="center-h">The AI Experience Center</h2>
+      </div>
+      <div class="rv" style="--d:80ms">
+        <p>A strategic enterprise innovation hub where AI-first and agentic solutions are prototyped, validated and scaled across the organization.</p>
+        <p>Its theme is the move from data chaos to intelligent, agentic decision-making, through alignment between people and AI. It carries both live deployments and proofs of concept.</p>
+      </div>
+    </div>
+
+    <div class="chips rv" role="group" aria-label="Filter initiatives">
+      <button class="chip" type="button" data-filter="all" aria-pressed="true">All 8</button>
+      <button class="chip" type="button" data-filter="conversational" aria-pressed="false">Conversational</button>
+      <button class="chip" type="button" data-filter="sales" aria-pressed="false">Sales</button>
+      <button class="chip" type="button" data-filter="agentic" aria-pressed="false">Agentic</button>
+      <button class="chip" type="button" data-filter="generative" aria-pressed="false">Generative</button>
+      <button class="chip" type="button" data-filter="hr" aria-pressed="false">HR</button>
+      <button class="chip" type="button" data-filter="quality" aria-pressed="false">Quality</button>
+      <button class="chip" type="button" data-filter="vision" aria-pressed="false">Vision</button>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite">Showing all 8 initiatives</p>
+
+    <div class="grid" id="cards">
+      <article class="card rv" data-cat="conversational"><span class="tag">Conversational AI</span><h3>AURA</h3><p>A multimodal voice and chat assistant powered by RAG, built to handle complex insurance queries and customer support.</p></article>
+      <article class="card rv" data-cat="sales" style="--d:60ms"><span class="tag">Sales enablement</span><h3>Saarthi</h3><p>An AI roleplay simulator that trains Sales Officers with real-time conversation simulation and automated performance scoring.</p></article>
+      <article class="card rv" data-cat="agentic sales" style="--d:120ms"><span class="tag">Agentic AI</span><h3>Agentic Sales Assistant</h3><p>An autonomous copilot for field sales teams: real-time pitch recommendations, customer insights and next-best-action workflows.</p></article>
+      <article class="card rv" data-cat="generative" style="--d:180ms"><span class="tag">Generative design</span><h3>Avatar Genie</h3><p>An interactive generative AI tool for personalised digital avatar creation and visual engagement.</p></article>
+      <article class="card rv" data-cat="hr"><span class="tag">HR tech</span><h3>TalentStream</h3><p>An AI recruitment and screening engine that streamlines candidate evaluation and matching.</p></article>
+      <article class="card rv" data-cat="quality" style="--d:60ms"><span class="tag">Quality engineering</span><h3>AI Test Case Creator</h3><p>Generates comprehensive software test cases from requirements to accelerate delivery cycles.</p></article>
+      <article class="card rv" data-cat="vision" style="--d:120ms"><span class="tag">Computer vision</span><h3>Liveliness Detection</h3><p>Real-time biometric verification that confirms physical presence, for fraud prevention and secure digital onboarding.</p></article>
+      <article class="card rv" data-cat="vision" style="--d:180ms"><span class="tag">Computer vision · KYC</span><h3>FaceMatch Verification</h3><p>High-accuracy facial matching that streamlines customer KYC and authentication.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="models" aria-labelledby="models-h">
+  <div class="wrap">
+    <div class="head">
+      <div class="rv">
+        <p class="eyebrow">Predictive work</p>
+        <h2 class="display" id="models-h">Machine learning models</h2>
+      </div>
+      <p class="rv" style="--d:80ms">Predictive models that put data science to work across risk, growth and retention.</p>
+    </div>
+
+    <div class="rows models rv" style="margin-top:3rem">
+      <div class="row"><span class="tag">Risk and fraud</span><div><h3>AI Fraud Detection for Insurance</h3><p>Machine learning models that surface suspicious claims and applications early, so investigators spend their time on the cases most likely to be fraudulent.</p></div></div>
+      <div class="row"><span class="tag">Sales integrity</span><div><h3>Sales Fraud Indicators</h3><p>Early-warning indicators that flag unusual patterns in sales activity, so compliance teams can review risky sales practices sooner.</p></div></div>
+      <div class="row"><span class="tag">Growth</span><div><h3>New Business Propensity Models</h3><p>Models that score leads by their likelihood to buy, helping sales teams prioritise outreach and focus effort where conversion is most likely.</p></div></div>
+      <div class="row"><span class="tag">Retention</span><div><h3>Renewal Models</h3><p>Models that predict which policies are likely to lapse, so teams can prioritise renewal outreach and protect premium retention.</p></div></div>
+    </div>
+
+    <h3 class="subhead rv">Also built</h3>
+    <div class="rows models rv">
+      <div class="row"><span class="tag">Customer servicing</span><div><h3>WhatsApp Servicing Ecosystem</h3><p>A chatbot that handles servicing requests on WhatsApp. It now takes on 30%+ of company servicing requests and lifted on-time communication delivery from 30% to 95%.</p></div></div>
+      <div class="row"><span class="tag">HR automation</span><div><h3>GenAI SUDHA</h3><p>The data pipeline and business logic behind a Generative AI HR chatbot that automates internal employee servicing.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="band band--alt" id="impact" aria-labelledby="impact-h">
+  <div class="wrap">
+    <div class="rv">
+      <p class="eyebrow">Results</p>
+      <h2 class="display" id="impact-h">Impact, measured.</h2>
+    </div>
+    <div class="impact">
+      <div class="rv"><b data-count="95" data-suffix="%">95%</b><p>On-time communication delivery, up from 30%, through the WhatsApp servicing ecosystem.</p></div>
+      <div class="rv" style="--d:70ms"><b data-count="30" data-suffix="%+">30%+</b><p>Of company servicing requests handled by the WhatsApp chatbot I architected.</p></div>
+      <div class="rv" style="--d:140ms"><b data-count="70" data-suffix="%">70%</b><p>Improvement from the AI QA agent, which turns requirement documents into test scenarios in seconds.</p></div>
+      <div class="rv" style="--d:210ms"><b data-count="300" data-suffix="+">300+</b><p>Active members in the Global AI Synergy community, grown from 50 across time zones.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="how-h">
+  <div class="wrap">
+    <div class="rv">
+      <p class="eyebrow">Approach</p>
+      <h2 class="display" id="how-h">How I work</h2>
+    </div>
+    <ol class="rows steps rv">
+      <li class="row"><span class="idx">01</span><div><h3>Start with the problem</h3><p>User research, persona mapping and empathy interviews define the Jobs-to-be-Done, so every AI idea begins with a real need rather than a shiny model.</p></div></li>
+      <li class="row"><span class="idx">02</span><div><h3>Make the case in numbers</h3><p>AI roadmaps, portfolio management and ROI forecasting tie each bet to a measurable business outcome that senior leadership can back.</p></div></li>
+      <li class="row"><span class="idx">03</span><div><h3>Ship it to production</h3><p>From high-concept POCs to enterprise-scale live deployments: Generative AI, agentic workflows, RAG and multimodal systems on Azure.</p></div></li>
+      <li class="row"><span class="idx">04</span><div><h3>Scale it and govern it</h3><p>Multi-million-dollar IT budgets, vendor RFPs and strategic partnerships, plus the stakeholder influence to carry what works across the whole organization.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band band--alt" id="career" aria-labelledby="career-h">
+  <div class="wrap">
+    <div class="rv">
+      <p class="eyebrow">Career</p>
+      <h2 class="display" id="career-h">Timeline</h2>
+    </div>
+    <ol class="rows timeline rv">
+      <li class="row"><span class="when">Apr 2023 – Present</span><p><b>Star Union Dai-ichi Life Insurance</b> <span>· Senior Manager, IT Strategy, Digital &amp; AI</span></p></li>
+      <li class="row"><span class="when">Apr – Oct 2025</span><p><b>Dai-ichi Holdings</b> <span>(Remote IJP) · AI Communications Manager</span></p></li>
+      <li class="row"><span class="when">Apr – Jun 2022</span><p><b>Khel Group</b> <span>· Data Intern</span></p></li>
+      <li class="row"><span class="when">2021 – 23</span><p><b>SBM NMIMS Mumbai</b> <span>· MBA, Business Analytics · 2x Director’s List</span></p></li>
+      <li class="row"><span class="when">Jan 2017 – Jun 2021</span><p><b>Zensar</b> <span>· Developer</span></p></li>
+      <li class="row"><span class="when">2012 – 16</span><p><b>Savitribai Phule Pune University</b> <span>· B.Engineering, Computers · First Class with Distinction</span></p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="rec-h">
+  <div class="wrap two">
+    <div class="rv">
+      <p class="eyebrow">Awards</p>
+      <h2 class="display" id="rec-h">Recognition</h2>
+      <ul class="list">
+        <li><b>Digital Champ</b>Driving digital transformation of business strategies and operations through technology and innovation.</li>
+        <li><b>Super Squad</b>Team award for delivery of a high-impact WhatsApp servicing chatbot.</li>
+        <li><b>Best L2 Team</b>Improving L2 processes and customer experience.</li>
+        <li><b>Customer Centricity – Emerging</b>Automating manual client processes that delayed deployment and data extraction.</li>
+        <li><b>Budding Innovator</b>Continuous improvements and high-quality deliverables.</li>
+        <li><b>AA ODC Certificate of Appreciation</b>Outstanding performance in the project.</li>
+      </ul>
+    </div>
+    <div class="rv" style="--d:80ms">
+      <p class="eyebrow">Credentials</p>
+      <h2 class="display">Certified</h2>
+      <ul class="list">
+        <li><b>Azure Certified</b>AI Transformation Leader</li>
+        <li><b>Lean Six Sigma Green Belt</b>KPMG</li>
+        <li><b>Pega Certified Senior System Architect</b>CSSA 7.4 · Pega Systems</li>
+        <li><b>Pega Certified System Architect</b>CSA 7.2 · Pega Systems</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band band--alt contact" id="contact" aria-labelledby="contact-h">
+  <div class="wrap">
+    <p class="eyebrow rv">Contact</p>
+    <h2 class="display rv" id="contact-h" style="--d:60ms">Let’s scale AI in your organization.</h2>
+    <p class="lede rv" style="--d:120ms">Get in touch to talk AI strategy, product leadership and enterprise adoption.</p>
+    <div class="mail rv" style="--d:160ms">
+      <span id="email">Namanjhawar.prodman@gmail.com</span>
+      <button class="btn" id="copy" type="button">Copy address</button>
+    </div>
+    <p class="copystate" id="copystate" role="status" aria-live="polite"></p>
+    <div class="hero__cta rv" style="--d:200ms">
+      <a class="btn btn--primary" href="mailto:Namanjhawar.prodman@gmail.com">Open in mail app <i aria-hidden="true">→</i></a>
+      <a class="btn" href="https://www.linkedin.com/in/namanjhawar/" target="_blank" rel="noopener">LinkedIn <i aria-hidden="true">↗</i></a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap"><span>Naman Jhawar</span><span>AI Transformation Leader</span></div>
+</footer>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  root.classList.add('js');
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- theme toggle ---------- */
+  var themeBtn=document.getElementById('themeBtn');
+  function effective(){
+    var t=root.getAttribute('data-theme');
+    if(t==='light'||t==='dark') return t;
+    return window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
+  }
+  try{var saved=localStorage.getItem('nj-theme'); if(saved==='light'||saved==='dark') root.setAttribute('data-theme',saved);}catch(e){}
+  themeBtn.addEventListener('click',function(){
+    var next=effective()==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('nj-theme',next);}catch(e){}
+    readColors(); if(reduce) drawOnce();
+  });
+
+  /* ---------- scroll reveal (offset only, content always visible) ---------- */
+  var rv=[].slice.call(document.querySelectorAll('.rv'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+    },{rootMargin:'0px 0px -6% 0px',threshold:.05});
+    rv.forEach(function(el){io.observe(el)});
+  } else { rv.forEach(function(el){el.classList.add('in')}); }
+
+  /* ---------- counters ---------- */
+  if(!reduce && 'IntersectionObserver' in window){
+    [].forEach.call(document.querySelectorAll('[data-count]'),function(el){
+      var end=parseFloat(el.getAttribute('data-count')), suf=el.getAttribute('data-suffix')||'', done=false;
+      var o=new IntersectionObserver(function(es){
+        es.forEach(function(e){
+          if(e.isIntersecting && !done){
+            done=true; o.disconnect();
+            var s=performance.now();
+            (function tick(n){
+              var p=Math.min((n-s)/1400,1), v=Math.round(end*(1-Math.pow(1-p,3)));
+              el.textContent=v+suf;
+              if(p<1) requestAnimationFrame(tick); else el.textContent=end+suf;
+            })(s);
+          }
+        });
+      },{threshold:.6});
+      o.observe(el);
+    });
+  }
+
+  /* ---------- filter ---------- */
+  var chips=[].slice.call(document.querySelectorAll('.chip'));
+  var cards=[].slice.call(document.querySelectorAll('#cards .card'));
+  var status=document.getElementById('status');
+  chips.forEach(function(c){
+    c.addEventListener('click',function(){
+      var f=c.getAttribute('data-filter'), n=0;
+      chips.forEach(function(x){x.setAttribute('aria-pressed',x===c?'true':'false')});
+      cards.forEach(function(card){
+        var show=f==='all' || (' '+card.getAttribute('data-cat')+' ').indexOf(' '+f+' ')>-1;
+        card.hidden=!show; if(show) n++;
+      });
+      status.textContent=f==='all' ? 'Showing all '+n+' initiatives' : 'Showing '+n+' of '+cards.length+' initiatives';
+    });
+  });
+
+  /* ---------- card glow ---------- */
+  cards.forEach(function(card){
+    card.addEventListener('pointermove',function(e){
+      var r=card.getBoundingClientRect();
+      card.style.setProperty('--mx',(e.clientX-r.left)+'px');
+      card.style.setProperty('--my',(e.clientY-r.top)+'px');
+    });
+  });
+
+  /* ---------- copy email ---------- */
+  var cp=document.getElementById('copy'), em=document.getElementById('email'), cs=document.getElementById('copystate'), t0;
+  function say(m){cs.textContent=m; clearTimeout(t0); t0=setTimeout(function(){cs.textContent=''},2600);}
+  function selectEmail(){
+    var r=document.createRange(); r.selectNodeContents(em);
+    var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    say('Address selected. Press Ctrl or Cmd + C to copy.');
+  }
+  cp.addEventListener('click',function(){
+    var txt=em.textContent.trim();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){say('Copied to clipboard')},selectEmail);
+    } else { selectEmail(); }
+  });
+
+  /* ---------- signal tuner ---------- */
+  var cv=document.getElementById('scope'), ctx=cv.getContext('2d');
+  var slider=document.getElementById('tune'), readout=document.getElementById('readout');
+  var colors={signal:'#ffc857',noise:'#6a77a6',line:'rgba(150,168,230,.18)'};
+  function readColors(){
+    var cs=getComputedStyle(root);
+    colors.signal=cs.getPropertyValue('--signal').trim()||colors.signal;
+    colors.noise=cs.getPropertyValue('--noise').trim()||colors.noise;
+    colors.line=cs.getPropertyValue('--line').trim()||colors.line;
+  }
+  var W=0,H=0,dpr=1,tune=1;
+  function size(){
+    dpr=Math.min(window.devicePixelRatio||1,2);
+    W=cv.clientWidth; H=cv.clientHeight;
+    cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function sig(x,t){
+    return Math.sin(6.2832*(x*1.4 - t*0.07))*0.55 + Math.sin(6.2832*(x*3.3 + t*0.05))*0.28 + Math.sin(6.2832*(x*0.6 - t*0.02))*0.17;
+  }
+  function rng(seed){
+    return function(){
+      seed|=0; seed=seed+0x6D2B79F5|0;
+      var t=Math.imul(seed^seed>>>15,1|seed);
+      t=t+Math.imul(t^t>>>7,61|t)^t;
+      return ((t^t>>>14)>>>0)/4294967296;
+    };
+  }
+  function draw(t,seed){
+    if(!W||!H) return;
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle=colors.line; ctx.lineWidth=1; ctx.globalAlpha=1;
+    ctx.beginPath();
+    for(var g=1;g<4;g++){var gy=Math.round(H*g/4)+.5; ctx.moveTo(0,gy); ctx.lineTo(W,gy);}
+    for(var gx=0;gx<W;gx+=48){var xx=Math.round(gx)+.5; ctx.moveTo(xx,0); ctx.lineTo(xx,H);}
+    ctx.stroke();
+    var mid=H/2, A=H*0.34, step=3, chaos=1-tune, rand=rng(seed), traces=chaos>0.01?6:0, i,k;
+    ctx.lineJoin='round';
+    for(k=0;k<traces;k++){
+      ctx.beginPath(); ctx.strokeStyle=colors.noise; ctx.lineWidth=1; ctx.globalAlpha=(0.14+0.1*(k%3))*Math.min(1,chaos*2+0.2);
+      for(i=0;i<=W;i+=step){
+        var x=i/W, n=(rand()-0.5)*2 + Math.sin(x*60+t*3+k*1.7)*0.6;
+        var y=mid - sig(x,t)*A*(0.4+0.6*tune) + n*A*chaos*1.15;
+        if(i===0) ctx.moveTo(i,y); else ctx.lineTo(i,y);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha=0.35+0.65*tune; ctx.strokeStyle=colors.signal; ctx.lineWidth=2.2;
+    ctx.beginPath();
+    var peaks=[], prev=0, prev2=0;
+    for(i=0;i<=W;i+=step){
+      var xs=i/W, v=sig(xs,t), ys=mid - v*A + (rand()-0.5)*A*0.18*chaos;
+      if(i===0) ctx.moveTo(i,ys); else ctx.lineTo(i,ys);
+      if(i>step*2 && prev>prev2 && prev>v && prev>0.72) peaks.push([i-step, mid - prev*A]);
+      prev2=prev; prev=v;
+    }
+    ctx.stroke();
+    if(tune>0.8){
+      ctx.globalAlpha=(tune-0.8)*5; ctx.fillStyle=colors.signal;
+      peaks.forEach(function(p){ctx.beginPath(); ctx.arc(p[0],p[1],4,0,6.2832); ctx.fill();});
+    }
+    ctx.globalAlpha=1;
+  }
+  function setTune(v,silent){
+    tune=Math.max(0,Math.min(1,v));
+    var pct=Math.round(tune*100);
+    readout.textContent='Signal '+pct+'%';
+    if(!silent) slider.value=pct;
+  }
+  function drawOnce(){draw(1.3,7)}
+
+  var raf=0, onScreen=true, tabOn=true, t0s=performance.now();
+  function loop(now){ draw((now-t0s)/1000,(now/55)|0); raf=requestAnimationFrame(loop); }
+  function sync(){
+    var go=!reduce && onScreen && tabOn;
+    if(go && !raf){raf=requestAnimationFrame(loop)}
+    else if(!go && raf){cancelAnimationFrame(raf); raf=0}
+  }
+  var userTouched=false;
+  function stopAuto(){userTouched=true}
+  slider.addEventListener('pointerdown',stopAuto);
+  slider.addEventListener('keydown',stopAuto);
+  slider.addEventListener('input',function(){stopAuto(); setTune(slider.value/100,true); if(reduce) drawOnce();});
+
+  readColors(); size(); setTune(1);
+  window.addEventListener('resize',function(){size(); if(reduce) drawOnce();});
+  var mq=window.matchMedia('(prefers-color-scheme: light)');
+  var onScheme=function(){readColors(); if(reduce) drawOnce();};
+  if(mq.addEventListener) mq.addEventListener('change',onScheme);
+
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(es){onScreen=es[0].isIntersecting; sync();}).observe(cv);
+  }
+  document.addEventListener('visibilitychange',function(){tabOn=!document.hidden; sync();});
+
+  if(reduce){ drawOnce(); }
+  else {
+    sync();
+    var from=0.18, dur=2600, s0=performance.now();
+    setTune(from);
+    (function auto(n){
+      if(userTouched) return;
+      var p=Math.min((n-s0)/dur,1), e=1-Math.pow(1-p,3);
+      setTune(from+(1-from)*e);
+      if(p<1) requestAnimationFrame(auto);
+    })(s0);
+  }
+})();
+</script>
